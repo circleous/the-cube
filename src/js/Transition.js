@@ -225,7 +225,10 @@ class Transition {
       });
     });
 
-    this.durations.stats = 0;
+    // Hold the busy signal for the full row animation. A zero duration released
+    // it while the rows were still sliding, which let the next screen start
+    // before this one finished and left two transitions animating at once.
+    this.durations.stats = (stats.length - 1) * (show ? 80 : 60) + 400;
 
     setTimeout(() => this.activeTransitions--, this.durations.stats);
   }
