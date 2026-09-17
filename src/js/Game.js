@@ -73,6 +73,7 @@ class Game {
 
     this.persistence.init();
     this.preferences.init();
+    this.themes.setTheme(false, true);
     this.cubeView.build();
     this.transition.init();
 

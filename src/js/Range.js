@@ -1,5 +1,9 @@
 import { Draggable } from './Draggable.js';
 
+// A dumb slider widget. It owns value <-> handle-position maths and pointer drag,
+// emits the value it settles on, and knows nothing about what a value means. The
+// setting declarations in `Preferences` build it and interpret its values.
+
 const RangeHTML = [
   '<div class="range">',
   '<div class="range__label"></div>',
@@ -11,69 +15,57 @@ const RangeHTML = [
   '</div>',
 ].join('\n');
 
-document.querySelectorAll('range').forEach((el) => {
-  const temp = document.createElement('div');
-  temp.innerHTML = RangeHTML;
+function createRange({ name, title, labels = [], color = false }) {
+  const template = document.createElement('div');
 
-  const range = temp.querySelector('.range');
-  const rangeLabel = range.querySelector('.range__label');
-  const rangeList = range.querySelector('.range__list');
+  template.innerHTML = RangeHTML;
 
-  range.setAttribute('name', el.getAttribute('name'));
-  rangeLabel.innerHTML = el.getAttribute('title');
+  const element = template.firstElementChild;
+  const list = element.querySelector('.range__list');
 
-  if (el.hasAttribute('color')) {
-    range.classList.add('range--type-color');
-    range.classList.add('range--color-' + el.getAttribute('name'));
-  }
+  element.setAttribute('name', name);
+  element.querySelector('.range__label').innerHTML = title;
 
-  if (el.hasAttribute('list')) {
-    el.getAttribute('list')
-      .split(',')
-      .forEach((listItemText) => {
-        const listItem = document.createElement('div');
-        listItem.innerHTML = listItemText;
-        rangeList.appendChild(listItem);
-      });
-  }
+  if (color) element.classList.add('range--type-color', `range--color-${name}`);
 
-  el.parentNode.replaceChild(range, el);
-});
+  labels.forEach((text) => {
+    const item = document.createElement('div');
+
+    item.innerHTML = text;
+    list.appendChild(item);
+  });
+
+  return element;
+}
 
 class Range {
-  constructor(name, options) {
-    options = Object.assign(
-      {
-        range: [0, 1],
-        value: 0,
-        step: 0,
-        onUpdate: () => {},
-        onComplete: () => {},
-      },
-      options || {},
-    );
+  constructor(element, options = {}) {
+    this.element = element;
+    this.track = element.querySelector('.range__track');
+    this.handle = element.querySelector('.range__handle');
+    this.list = [...element.querySelectorAll('.range__list div')];
 
-    this.element = document.querySelector('.range[name="' + name + '"]');
-    this.track = this.element.querySelector('.range__track');
-    this.handle = this.element.querySelector('.range__handle');
-    this.list = [].slice.call(this.element.querySelectorAll('.range__list div'));
+    this.value = options.value ?? 0;
+    this.min = options.range ? options.range[0] : 0;
+    this.max = options.range ? options.range[1] : 1;
+    this.step = options.step ?? 0;
 
-    this.value = options.value;
-    this.min = options.range[0];
-    this.max = options.range[1];
-    this.step = options.step;
-
-    this.onUpdate = options.onUpdate;
-    this.onComplete = options.onComplete;
+    this.onUpdate = options.onUpdate ?? (() => {});
+    this.onComplete = options.onComplete ?? (() => {});
 
     this.setValue(this.value);
-
     this.initDraggable();
   }
 
   setValue(value) {
     this.value = this.round(this.limitValue(value));
     this.setHandlePosition();
+  }
+
+  setLabels(labels) {
+    this.list.forEach((item, index) => {
+      item.innerHTML = labels[index] ?? '';
+    });
   }
 
   initDraggable() {
@@ -133,4 +125,4 @@ class Range {
   }
 }
 
-export { Range };
+export { Range, createRange };
