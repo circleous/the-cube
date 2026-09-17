@@ -73,7 +73,7 @@ class Themes {
       range.style.background = '#' + colors.R.toString(16).padStart(6, '0');
     });
 
-    this.game.cube.updateColors(colors);
+    this.game.cubeView.updateColors(colors);
 
     this.game.confetti.updateColors(colors);
 

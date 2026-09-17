@@ -1,9 +1,9 @@
-import * as THREE from 'three';
+import { fromNotation } from './Moves.js';
 
+// Turns a size and difficulty into a random sequence of moves. Pure: no scene, no
+// DOM, and an injectable rng so a seeded generator makes the output testable.
 class Scrambler {
-  constructor(game) {
-    this.game = game;
-
+  constructor() {
     this.dificulty = 0;
 
     this.scrambleLength = {
@@ -14,68 +14,30 @@ class Scrambler {
     };
 
     this.moves = [];
-    this.conveted = [];
-    this.pring = '';
+    this.sequence = [];
+    this.print = '';
   }
 
-  scramble(scramble) {
-    let count = 0;
-    this.moves = typeof scramble !== 'undefined' ? scramble.split(' ') : [];
+  generate({ size, difficulty = this.dificulty, rng = Math.random } = {}) {
+    const length = this.scrambleLength[size][difficulty];
+    const faces = size < 4 ? 'UDLRFB' : 'UuDdLlRrFfBb';
+    const modifiers = ['', "'", '2'];
+    const moves = [];
 
-    if (this.moves.length < 1) {
-      const scrambleLength = this.scrambleLength[this.game.cube.size][this.dificulty];
+    while (moves.length < length) {
+      const move = faces[Math.floor(rng() * faces.length)] + modifiers[Math.floor(rng() * 3)];
 
-      const faces = this.game.cube.size < 4 ? 'UDLRFB' : 'UuDdLlRrFfBb';
-      const modifiers = ['', "'", '2'];
-      const total = typeof scramble === 'undefined' ? scrambleLength : scramble;
+      if (moves.length > 0 && move[0] === moves[moves.length - 1][0]) continue;
+      if (moves.length > 1 && move[0] === moves[moves.length - 2][0]) continue;
 
-      while (count < total) {
-        const move =
-          faces[Math.floor(Math.random() * faces.length)] +
-          modifiers[Math.floor(Math.random() * 3)];
-
-        if (count > 0 && move.charAt(0) == this.moves[count - 1].charAt(0)) continue;
-        if (count > 1 && move.charAt(0) == this.moves[count - 2].charAt(0)) continue;
-
-        this.moves.push(move);
-        count++;
-      }
+      moves.push(move);
     }
 
-    this.callback = () => {};
-    this.convert();
-    this.print = this.moves.join(' ');
+    this.moves = moves;
+    this.print = moves.join(' ');
+    this.sequence = moves.flatMap((move) => fromNotation(move, size));
 
     return this;
-  }
-
-  convert() {
-    this.converted = [];
-
-    this.moves.forEach((move) => {
-      const convertedMove = this.convertMove(move);
-      const modifier = move.charAt(1);
-
-      this.converted.push(convertedMove);
-      if (modifier == '2') this.converted.push(convertedMove);
-    });
-  }
-
-  convertMove(move) {
-    const face = move.charAt(0);
-    const modifier = move.charAt(1);
-
-    const axis = { D: 'y', U: 'y', L: 'x', R: 'x', F: 'z', B: 'z' }[face.toUpperCase()];
-    let row = { D: -1, U: 1, L: -1, R: 1, F: 1, B: -1 }[face.toUpperCase()];
-
-    if (this.game.cube.size > 3 && face !== face.toLowerCase()) row = row * 2;
-
-    const position = new THREE.Vector3();
-    position[{ D: 'y', U: 'y', L: 'x', R: 'x', F: 'z', B: 'z' }[face.toUpperCase()]] = row;
-
-    const angle = (Math.PI / 2) * -row * (modifier == "'" ? -1 : 1);
-
-    return { position, axis, angle, name: move };
   }
 }
 

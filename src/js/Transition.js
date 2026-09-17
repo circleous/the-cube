@@ -17,9 +17,9 @@ class Transition {
   init() {
     this.game.controls.disable();
 
-    this.game.cube.object.position.y = this.data.cubeY;
-    this.game.cube.animator.position.y = 4;
-    this.game.cube.animator.rotation.x = -Math.PI / 3;
+    this.game.cubeView.object.position.y = this.data.cubeY;
+    this.game.cubeView.animator.position.y = 4;
+    this.game.cubeView.animator.rotation.x = -Math.PI / 3;
     this.game.world.camera.zoom = this.data.cameraZoom;
     this.game.world.camera.updateProjectionMatrix();
 
@@ -69,20 +69,20 @@ class Transition {
       this.tweens.cube.stop();
     } catch {}
 
-    const currentY = this.game.cube.animator.position.y;
-    const currentRotation = this.game.cube.animator.rotation.x;
+    const currentY = this.game.cubeView.animator.position.y;
+    const currentRotation = this.game.cubeView.animator.rotation.x;
 
     this.tweens.cube = new Tween({
       duration: show ? 3000 : 1250,
       easing: show ? Easing.Elastic.Out(0.8, 0.6) : Easing.Back.In(1),
       onUpdate: (tween) => {
-        this.game.cube.animator.position.y = show
+        this.game.cubeView.animator.position.y = show
           ? theming
             ? 0.9 + (1 - tween.value) * 3.5
             : (1 - tween.value) * 4
           : currentY + tween.value * 4;
 
-        this.game.cube.animator.rotation.x = show
+        this.game.cubeView.animator.rotation.x = show
           ? ((1 - tween.value) * Math.PI) / 3
           : currentRotation + (tween.value * -Math.PI) / 3;
       },
@@ -115,13 +115,13 @@ class Transition {
       easing: Easing.Sine.InOut(),
       yoyo: true,
       onUpdate: (tween) => {
-        this.game.cube.holder.position.y = -0.02 + tween.value * 0.04;
-        this.game.cube.holder.rotation.x = 0.005 - tween.value * 0.01;
-        this.game.cube.holder.rotation.z = -this.game.cube.holder.rotation.x;
-        this.game.cube.holder.rotation.y = this.game.cube.holder.rotation.x;
+        this.game.cubeView.holder.position.y = -0.02 + tween.value * 0.04;
+        this.game.cubeView.holder.rotation.x = 0.005 - tween.value * 0.01;
+        this.game.cubeView.holder.rotation.z = -this.game.cubeView.holder.rotation.x;
+        this.game.cubeView.holder.rotation.y = this.game.cubeView.holder.rotation.x;
 
-        this.game.controls.edges.position.y =
-          this.game.cube.holder.position.y + this.game.cube.object.position.y;
+        this.game.cubeView.bounds.position.y =
+          this.game.cubeView.holder.position.y + this.game.cubeView.object.position.y;
       },
     });
   }
@@ -145,12 +145,12 @@ class Transition {
     });
 
     this.tweens.rotate = new Tween({
-      target: this.game.cube.animator.rotation,
+      target: this.game.cubeView.animator.rotation,
       duration: duration,
       easing: easing,
       to: { y: -Math.PI * 2 * rotations },
       onComplete: () => {
-        this.game.cube.animator.rotation.y = 0;
+        this.game.cubeView.animator.rotation.y = 0;
       },
     });
 
@@ -163,7 +163,7 @@ class Transition {
     this.activeTransitions++;
 
     this.tweens.elevate = new Tween({
-      target: this.game.cube.object.position,
+      target: this.game.cubeView.object.position,
       duration: complete ? 1500 : 0,
       easing: Easing.Power.InOut(3),
       to: { y: complete ? -0.05 : this.data.cubeY },

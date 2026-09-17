@@ -1,200 +1,250 @@
-import * as THREE from 'three';
+import { AXIS_INDEX, fromNotation, layerForRow } from './Moves.js';
 
-import { RoundedBoxGeometry } from './plugins/RoundedBoxGeometry.js';
-import { RoundedPlaneGeometry } from './plugins/RoundedPlaneGeometry.js';
+// The puzzle, as data. Cells are grid indices (0..size-1); orientation is a 3x3
+// signed-permutation matrix (local -> cube frame) stored row-major. Nothing here
+// touches three.js, the DOM or storage, so the whole model is testable headless.
+//
+// The three.js view (`CubeView`) is an adapter that reads this model and renders it;
+// it is the only module allowed to know about meshes.
 
-class Cube {
-  constructor(game) {
-    this.game = game;
-    this.size = 3;
+const IDENTITY = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 
-    this.geometry = {
-      pieceCornerRadius: 0.12,
-      edgeCornerRoundness: 0.15,
-      edgeScale: 0.82,
-      edgeDepth: 0.01,
-    };
+const NORMALS = {
+  L: [-1, 0, 0],
+  R: [1, 0, 0],
+  D: [0, -1, 0],
+  U: [0, 1, 0],
+  B: [0, 0, -1],
+  F: [0, 0, 1],
+};
 
-    this.holder = new THREE.Object3D();
-    this.object = new THREE.Object3D();
-    this.animator = new THREE.Object3D();
+const UNIT = {
+  x: [1, 0, 0],
+  y: [0, 1, 0],
+  z: [0, 0, 1],
+};
 
-    this.holder.add(this.animator);
-    this.animator.add(this.object);
+// Quarter-turn matrices about the positive axis (right-handed), row-major.
+const QUARTER = {
+  x: [1, 0, 0, 0, 0, -1, 0, 1, 0],
+  y: [0, 0, 1, 0, 1, 0, -1, 0, 0],
+  z: [0, -1, 0, 1, 0, 0, 0, 0, 1],
+};
 
-    this.game.world.scene.add(this.holder);
-  }
+function multiply(a, b) {
+  const out = Array.from({ length: 9 }, () => 0);
 
-  init() {
-    this.cubes = [];
-    this.object.children = [];
-    this.object.add(this.game.controls.group);
-
-    if (this.size === 2) this.scale = 1.25;
-    else if (this.size === 3) this.scale = 1;
-    else if (this.size > 3) this.scale = 3 / this.size;
-
-    this.object.scale.set(this.scale, this.scale, this.scale);
-
-    const controlsScale = this.size === 2 ? 0.825 : 1;
-    this.game.controls.edges.scale.set(controlsScale, controlsScale, controlsScale);
-
-    this.generatePositions();
-    this.generateModel();
-
-    this.pieces.forEach((piece) => {
-      this.cubes.push(piece.userData.cube);
-      this.object.add(piece);
-    });
-
-    this.holder.traverse((node) => {
-      if (node.frustumCulled) node.frustumCulled = false;
-    });
-
-    this.updateColors(this.game.themes.getColors());
-
-    this.sizeGenerated = this.size;
-  }
-
-  resize(force = false) {
-    if (this.size !== this.sizeGenerated || force) {
-      this.size = this.game.preferences.ranges.size.value;
-
-      this.reset();
-      this.init();
-
-      this.game.saved = false;
-      this.game.timer.reset();
-      this.game.storage.clearGame();
+  for (let row = 0; row < 3; row++) {
+    for (let col = 0; col < 3; col++) {
+      out[row * 3 + col] =
+        a[row * 3] * b[col] + a[row * 3 + 1] * b[3 + col] + a[row * 3 + 2] * b[6 + col];
     }
   }
 
-  reset() {
-    this.game.controls.edges.rotation.set(0, 0, 0);
+  return out;
+}
 
-    this.holder.rotation.set(0, 0, 0);
-    this.object.rotation.set(0, 0, 0);
-    this.animator.rotation.set(0, 0, 0);
+function applyMatrix(matrix, vector) {
+  return [
+    matrix[0] * vector[0] + matrix[1] * vector[1] + matrix[2] * vector[2],
+    matrix[3] * vector[0] + matrix[4] * vector[1] + matrix[5] * vector[2],
+    matrix[6] * vector[0] + matrix[7] * vector[1] + matrix[8] * vector[2],
+  ];
+}
+
+function transpose(matrix) {
+  return [
+    matrix[0],
+    matrix[3],
+    matrix[6],
+    matrix[1],
+    matrix[4],
+    matrix[7],
+    matrix[2],
+    matrix[5],
+    matrix[8],
+  ];
+}
+
+function rotationMatrix(axis, turns) {
+  const steps = ((turns % 4) + 4) % 4;
+  let matrix = IDENTITY.slice();
+
+  for (let step = 0; step < steps; step++) matrix = multiply(QUARTER[axis], matrix);
+
+  return matrix;
+}
+
+function dominantAxis(vector) {
+  return ['x', 'y', 'z'].reduce((best, axis) =>
+    Math.abs(vector[AXIS_INDEX[axis]]) > Math.abs(vector[AXIS_INDEX[best]]) ? axis : best,
+  );
+}
+
+class Cube {
+  constructor(size = 3) {
+    this.size = size;
+    this.build();
   }
 
-  generatePositions() {
-    const m = this.size - 1;
-    const first = this.size % 2 !== 0 ? 0 - Math.floor(this.size / 2) : 0.5 - this.size / 2;
+  setSize(size) {
+    this.size = size;
+    this.build();
+  }
 
-    let x, y, z;
+  // Solved state for the current size: pieces at their home cells, identity orientation.
+  build() {
+    const { size } = this;
+    const last = size - 1;
 
-    this.positions = [];
+    this.orientation = IDENTITY.slice();
+    this.pieces = [];
+    this.byName = new Map();
 
-    for (x = 0; x < this.size; x++) {
-      for (y = 0; y < this.size; y++) {
-        for (z = 0; z < this.size; z++) {
-          let position = new THREE.Vector3(first + x, first + y, first + z);
-          let edges = [];
+    let name = 0;
 
-          if (x == 0) edges.push(0);
-          if (x == m) edges.push(1);
-          if (y == 0) edges.push(2);
-          if (y == m) edges.push(3);
-          if (z == 0) edges.push(4);
-          if (z == m) edges.push(5);
+    for (let x = 0; x < size; x++) {
+      for (let y = 0; y < size; y++) {
+        for (let z = 0; z < size; z++) {
+          const cell = [x, y, z];
+          const stickers = [];
 
-          position.edges = edges;
-          this.positions.push(position);
+          if (x === 0) stickers.push({ name: 'L', normal: NORMALS.L });
+          if (x === last) stickers.push({ name: 'R', normal: NORMALS.R });
+          if (y === 0) stickers.push({ name: 'D', normal: NORMALS.D });
+          if (y === last) stickers.push({ name: 'U', normal: NORMALS.U });
+          if (z === 0) stickers.push({ name: 'B', normal: NORMALS.B });
+          if (z === last) stickers.push({ name: 'F', normal: NORMALS.F });
+
+          const piece = { name, cell, orientation: IDENTITY.slice(), stickers };
+
+          this.pieces.push(piece);
+          this.byName.set(name, piece);
+          name++;
         }
       }
     }
   }
 
-  generateModel() {
-    this.pieces = [];
-    this.edges = [];
+  // Piece names whose cell sits on the given layer.
+  layer(axis, index) {
+    const coordinate = AXIS_INDEX[axis];
 
-    const pieceSize = 1 / 3;
+    return this.pieces
+      .filter((piece) => piece.cell[coordinate] === index)
+      .map((piece) => piece.name);
+  }
 
-    const mainMaterial = new THREE.MeshLambertMaterial();
+  // Apply a local move. Mutates in place so the pointer-drag and render loops don't
+  // allocate per frame; returns the affected piece names so the view can animate them.
+  apply(move) {
+    const matrix = rotationMatrix(move.axis, move.turns);
+    const affected = this.layer(move.axis, move.layer);
+    const center = (this.size - 1) / 2;
 
-    const pieceMesh = new THREE.Mesh(
-      new RoundedBoxGeometry(pieceSize, this.geometry.pieceCornerRadius, 3),
-      mainMaterial.clone(),
-    );
+    affected.forEach((name) => {
+      const piece = this.byName.get(name);
 
-    const edgeGeometry = RoundedPlaneGeometry(
-      pieceSize,
-      this.geometry.edgeCornerRoundness,
-      this.geometry.edgeDepth,
-    );
+      piece.cell = applyMatrix(
+        matrix,
+        piece.cell.map((value) => value - center),
+      ).map((value) => value + center);
+      piece.orientation = multiply(matrix, piece.orientation);
+    });
 
-    this.positions.forEach((position, index) => {
-      const piece = new THREE.Object3D();
-      const pieceCube = pieceMesh.clone();
-      const pieceEdges = [];
+    return affected;
+  }
 
-      piece.position.copy(position.clone().divideScalar(3));
-      piece.add(pieceCube);
-      piece.name = index;
-      piece.edgesName = '';
+  // Apply camera-relative notation by rotating it into the cube's current orientation.
+  applyNotation(name) {
+    let affected = [];
 
-      position.edges.forEach((position) => {
-        const edge = new THREE.Mesh(edgeGeometry, mainMaterial.clone());
-        const name = ['L', 'R', 'D', 'U', 'B', 'F'][position];
-        const distance = pieceSize / 2;
+    this.localMoves(name).forEach((move) => {
+      affected = affected.concat(this.apply(move));
+    });
 
-        edge.position.set(
-          distance * [-1, 1, 0, 0, 0, 0][position],
-          distance * [0, 0, -1, 1, 0, 0][position],
-          distance * [0, 0, 0, 0, -1, 1][position],
-        );
+    return affected;
+  }
 
-        edge.rotation.set(
-          (Math.PI / 2) * [0, 0, 1, -1, 0, 0][position],
-          (Math.PI / 2) * [-1, 1, 0, 0, 2, 0][position],
-          0,
-        );
+  // The local moves a notation string denotes at the current orientation, without
+  // applying them. The view animates these one by one.
+  localMoves(name) {
+    const inverse = transpose(this.orientation);
 
-        edge.scale.set(this.geometry.edgeScale, this.geometry.edgeScale, this.geometry.edgeScale);
+    return fromNotation(name, this.size).map((viewerMove) => {
+      const localAxis = applyMatrix(inverse, UNIT[viewerMove.axis]);
+      const axis = dominantAxis(localAxis);
+      const sign = Math.sign(localAxis[AXIS_INDEX[axis]]);
+      const row = sign * viewerMove.row;
 
-        edge.name = name;
-
-        piece.add(edge);
-        pieceEdges.push(name);
-        this.edges.push(edge);
-      });
-
-      piece.userData.edges = pieceEdges;
-      piece.userData.cube = pieceCube;
-
-      piece.userData.start = {
-        position: piece.position.clone(),
-        rotation: piece.rotation.clone(),
+      return {
+        axis,
+        row,
+        layer: layerForRow(this.size, row),
+        turns: sign * viewerMove.turns,
+        name,
       };
-
-      this.pieces.push(piece);
     });
   }
 
-  updateColors(colors) {
-    if (typeof this.pieces !== 'object' && typeof this.edges !== 'object') return;
-
-    this.pieces.forEach((piece) => piece.userData.cube.material.color.setHex(colors.P));
-    this.edges.forEach((edge) => edge.material.color.setHex(colors[edge.name]));
-  }
-
-  loadFromData(data) {
-    this.size = data.size;
-
-    this.reset();
-    this.init();
+  // A face is solved when every sticker facing it shares one name.
+  isSolved() {
+    const faces = new Map();
 
     this.pieces.forEach((piece) => {
-      const index = data.names.indexOf(piece.name);
+      piece.stickers.forEach((sticker) => {
+        const facing = applyMatrix(piece.orientation, sticker.normal).map((value) =>
+          Math.round(value),
+        );
+        const key = facing.join(',');
 
-      const position = data.positions[index];
-      const rotation = data.rotations[index];
-
-      piece.position.set(position.x, position.y, position.z);
-      piece.rotation.set(rotation.x, rotation.y, rotation.z);
+        if (!faces.has(key)) faces.set(key, sticker.name);
+        else if (faces.get(key) !== sticker.name) faces.set(key, false);
+      });
     });
+
+    return [...faces.values()].every((value) => value !== false);
+  }
+
+  orient(axis, turns) {
+    this.orientation = multiply(rotationMatrix(axis, turns), this.orientation);
+  }
+
+  setOrientation(matrix) {
+    this.orientation = matrix.slice();
+  }
+
+  snapshot() {
+    return {
+      size: this.size,
+      pieces: this.pieces.map((piece) => ({
+        name: piece.name,
+        cell: [...piece.cell],
+        orientation: [...piece.orientation],
+      })),
+    };
+  }
+
+  restore(snapshot) {
+    this.size = snapshot.size;
+    this.build();
+
+    snapshot.pieces.forEach((data) => {
+      const piece = this.byName.get(data.name);
+
+      if (!piece) return;
+
+      piece.cell = [...data.cell];
+      piece.orientation = [...data.orientation];
+    });
+  }
+
+  // Logical cell -> render position, matching the original world scale.
+  toWorld(cell) {
+    const center = (this.size - 1) / 2;
+
+    return cell.map((value) => (value - center) / 3);
   }
 }
 
-export { Cube };
+export { Cube, multiply, applyMatrix, rotationMatrix };

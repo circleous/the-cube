@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 class Storage {
   constructor(game) {
     this.game = game;
@@ -28,31 +26,28 @@ class Storage {
       const gameCubeData = JSON.parse(localStorage.getItem('theCube_savedState'));
       const gameTime = parseInt(localStorage.getItem('theCube_time'));
 
-      if (!gameCubeData || gameTime === null) throw new Error();
-      if (gameCubeData.size !== this.game.cube.sizeGenerated) throw new Error();
+      if (!gameCubeData || Number.isNaN(gameTime)) throw new Error();
+      if (gameCubeData.size !== this.game.cube.size) throw new Error();
 
-      this.game.cube.loadFromData(gameCubeData);
+      this.game.cube.restore(gameCubeData);
+      this.game.cubeView.syncAll();
 
       this.game.timer.deltaTime = gameTime;
 
       this.game.saved = true;
+
+      return true;
     } catch {
       this.game.saved = false;
+
+      return false;
     }
   }
 
   saveGame() {
     const gameInProgress = true;
-    const gameCubeData = { names: [], positions: [], rotations: [] };
+    const gameCubeData = this.game.cube.snapshot();
     const gameTime = this.game.timer.deltaTime;
-
-    gameCubeData.size = this.game.cube.sizeGenerated;
-
-    this.game.cube.pieces.forEach((piece) => {
-      gameCubeData.names.push(piece.name);
-      gameCubeData.positions.push(piece.position);
-      gameCubeData.rotations.push(new THREE.Vector3().setFromEuler(piece.rotation));
-    });
 
     localStorage.setItem('theCube_playing', gameInProgress);
     localStorage.setItem('theCube_savedState', JSON.stringify(gameCubeData));
@@ -113,7 +108,7 @@ class Storage {
       if (!preferences) throw new Error();
 
       this.game.cube.size = parseInt(preferences.cubeSize);
-      this.game.controls.flipConfig = parseInt(preferences.flipConfig);
+      this.game.cubeView.flipConfig = parseInt(preferences.flipConfig);
       this.game.scrambler.dificulty = parseInt(preferences.dificulty);
 
       this.game.world.fov = parseFloat(preferences.fov);
@@ -125,7 +120,7 @@ class Storage {
       return true;
     } catch {
       this.game.cube.size = 3;
-      this.game.controls.flipConfig = 0;
+      this.game.cubeView.flipConfig = 0;
       this.game.scrambler.dificulty = 1;
 
       this.game.world.fov = 10;
@@ -142,7 +137,7 @@ class Storage {
   savePreferences() {
     const preferences = {
       cubeSize: this.game.cube.size,
-      flipConfig: this.game.controls.flipConfig,
+      flipConfig: this.game.cubeView.flipConfig,
       dificulty: this.game.scrambler.dificulty,
       fov: this.game.world.fov,
       theme: this.game.themes.theme,

@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+// Thin adapter: key codes to move notation. The model owns turning notation into a
+// local move, so the orientation math that used to live here is gone.
 
 const SHIFT = 16;
 
@@ -35,32 +36,11 @@ class Keyboard {
 
     if (FACES[e.keyCode]) {
       const modifier = this.shift ? `'` : ``;
-      const move = this.game.scrambler.convertMove(FACES[e.keyCode] + modifier);
 
-      this.game.controls.keyboardMove('LAYER', this.toLocalMove(move), () => {});
+      this.game.controls.notate(FACES[e.keyCode] + modifier);
     } else if (ROTATIONS[e.keyCode]) {
-      const axis = ROTATIONS[e.keyCode];
-      const angle = ((this.shift ? 1 : -1) * Math.PI) / 2;
-
-      this.game.controls.keyboardMove('CUBE', { axis, angle }, () => {});
+      this.game.controls.rotate(ROTATIONS[e.keyCode], this.shift ? 1 : -1);
     }
-  }
-
-  toLocalMove(move) {
-    // Notation is read from the camera, so the move has to be rotated into
-    // whichever way the cube currently faces before it reaches the controls.
-    const orientation = this.game.cube.object.quaternion.clone().inverse();
-
-    const worldAxis = new THREE.Vector3();
-    worldAxis[move.axis] = 1;
-
-    const localAxis = worldAxis.applyQuaternion(orientation).round();
-    const axis = this.game.controls.getMainAxis(localAxis);
-    const sign = Math.sign(localAxis[axis]);
-
-    const position = move.position.clone().applyQuaternion(orientation).round();
-
-    return { position, axis, angle: sign * move.angle };
   }
 
   keyup(e) {

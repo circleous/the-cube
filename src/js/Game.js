@@ -1,5 +1,6 @@
 import { World } from './World.js';
 import { Cube } from './Cube.js';
+import { CubeView } from './CubeView.js';
 import { Controls } from './Controls.js';
 import { Scrambler } from './Scrambler.js';
 import { Transition } from './Transition.js';
@@ -64,7 +65,8 @@ class Game {
     };
 
     this.world = new World(this);
-    this.cube = new Cube(this);
+    this.cube = new Cube(3);
+    this.cubeView = new CubeView(this, this.cube);
     this.controls = new Controls(this);
     this.keyboard = new Keyboard(this);
     this.scrambler = new Scrambler(this);
@@ -85,7 +87,7 @@ class Game {
 
     this.storage.init();
     this.preferences.init();
-    this.cube.init();
+    this.cubeView.build();
     this.transition.init();
 
     this.storage.loadGame();
@@ -163,14 +165,14 @@ class Game {
   game(show) {
     if (show) {
       if (!this.saved) {
-        this.scrambler.scramble();
+        this.scrambler.generate({ size: this.cube.size });
         this.controls.scrambleCube();
         this.newGame = true;
       }
 
       const duration = this.saved
         ? 0
-        : this.scrambler.converted.length * (this.controls.flipSpeeds[0] + 10);
+        : this.scrambler.sequence.length * (this.cubeView.flipSpeeds[0] + 10);
 
       this.state = STATE.Playing;
       this.saved = true;
@@ -220,7 +222,7 @@ class Game {
 
       setTimeout(() => this.transition.preferences(SHOW), 1000);
     } else {
-      this.cube.resize();
+      this.cubeView.resize();
 
       this.state = STATE.Menu;
 
@@ -239,7 +241,8 @@ class Game {
     if (show) {
       if (this.transition.activeTransitions > 0) return;
 
-      this.cube.loadFromData(States['3']['checkerboard']);
+      this.cube.restore(States['3']['checkerboard']);
+      this.cubeView.syncAll();
 
       this.themeEditor.setHSL(null, false);
 
@@ -264,11 +267,12 @@ class Game {
         const gameCubeData = JSON.parse(localStorage.getItem('theCube_savedState'));
 
         if (!gameCubeData) {
-          this.cube.resize(true);
+          this.cubeView.resize(true);
           return;
         }
 
-        this.cube.loadFromData(gameCubeData);
+        this.cube.restore(gameCubeData);
+        this.cubeView.syncAll();
       }, 1500);
     }
   }
@@ -327,7 +331,9 @@ class Game {
       this.timer.reset();
 
       setTimeout(() => {
-        this.cube.reset();
+        this.cube.build();
+        this.cubeView.reset();
+        this.cubeView.syncAll();
         this.confetti.stop();
 
         this.transition.stats(SHOW);

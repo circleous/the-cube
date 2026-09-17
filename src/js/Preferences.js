@@ -22,11 +22,11 @@ class Preferences {
       }),
 
       flip: new Range('flip', {
-        value: this.game.controls.flipConfig,
+        value: this.game.cubeView.flipConfig,
         range: [0, 2],
         step: 1,
         onUpdate: (value) => {
-          this.game.controls.flipConfig = value;
+          this.game.cubeView.flipConfig = value;
         },
         onComplete: () => this.game.storage.savePreferences(),
       }),

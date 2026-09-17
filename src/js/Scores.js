@@ -31,7 +31,7 @@ class Scores {
   }
 
   addScore(time) {
-    const data = this.data[this.game.cube.sizeGenerated];
+    const data = this.data[this.game.cube.size];
 
     data.scores.push(time);
     data.solves++;
@@ -53,7 +53,7 @@ class Scores {
   }
 
   calcStats() {
-    const s = this.game.cube.sizeGenerated;
+    const s = this.game.cube.size;
     const data = this.data[s];
 
     this.setStat('cube-size', `${s}<i>x</i>${s}<i>x</i>${s}`);
@@ -72,7 +72,7 @@ class Scores {
   }
 
   getAverage(count) {
-    const data = this.data[this.game.cube.sizeGenerated];
+    const data = this.data[this.game.cube.size];
 
     if (data.scores.length < count) return 0;
 

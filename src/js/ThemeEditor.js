@@ -124,16 +124,24 @@ class ThemeEditor {
 
     const clickPosition = new THREE.Vector2(clickEvent.pageX, clickEvent.pageY);
 
-    let edgeIntersect = this.game.controls.getIntersect(clickPosition, this.game.cube.edges, true);
-    let pieceIntersect = this.game.controls.getIntersect(clickPosition, this.game.cube.cubes, true);
+    let edgeIntersect = this.game.controls.getIntersect(
+      clickPosition,
+      this.game.cubeView.stickers,
+      true,
+    );
+    let pieceIntersect = this.game.controls.getIntersect(
+      clickPosition,
+      this.game.cubeView.cubes,
+      true,
+    );
 
     if (edgeIntersect !== false) {
       const edge = edgeIntersect.object;
 
       const position = edge.parent
         .localToWorld(edge.position.clone())
-        .sub(this.game.cube.object.position)
-        .sub(this.game.cube.animator.position);
+        .sub(this.game.cubeView.object.position)
+        .sub(this.game.cubeView.animator.position);
 
       const mainAxis = this.game.controls.getMainAxis(position);
       if (position.multiplyScalar(2).round()[mainAxis] < 1) edgeIntersect = false;
