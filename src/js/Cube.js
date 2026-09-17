@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 import { RoundedBoxGeometry } from './plugins/RoundedBoxGeometry.js';
 import { RoundedPlaneGeometry } from './plugins/RoundedPlaneGeometry.js';
 

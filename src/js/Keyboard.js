@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 const SHIFT = 16;
 
 const FACES = {

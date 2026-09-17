@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 import { Animation } from './Animation.js';
 
 class World extends Animation {
@@ -46,7 +48,7 @@ class World extends Animation {
 	  this.camera.aspect = this.width / this.height;
 
 		const aspect = this.stage.width / this.stage.height;
-	  const fovRad = this.fov * THREE.Math.DEG2RAD;
+	  const fovRad = this.fov * THREE.MathUtils.DEG2RAD;
 
 	  let distance = ( aspect < this.camera.aspect )
 			? ( this.stage.height / 2 ) / Math.tan( fovRad / 2 )
@@ -70,11 +72,16 @@ class World extends Animation {
 
 	createLights() {
 
+		// three r155 made lighting physically correct and removed legacy mode,
+		// which scaled light intensity by PI. Keep the original r95 look by
+		// applying that factor explicitly.
+		const LEGACY_LIGHTS = Math.PI;
+
 		this.lights = {
 			holder:  new THREE.Object3D,
-			ambient: new THREE.AmbientLight( 0xffffff, 0.69 ),
-			front:   new THREE.DirectionalLight( 0xffffff, 0.36 ),
-			back:    new THREE.DirectionalLight( 0xffffff, 0.19 ),
+			ambient: new THREE.AmbientLight( 0xffffff, 0.69 * LEGACY_LIGHTS ),
+			front:   new THREE.DirectionalLight( 0xffffff, 0.36 * LEGACY_LIGHTS ),
+			back:    new THREE.DirectionalLight( 0xffffff, 0.19 * LEGACY_LIGHTS ),
 		};
 
 		this.lights.front.position.set( 1.5, 5, 3 );

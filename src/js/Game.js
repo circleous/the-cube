@@ -14,6 +14,7 @@ import { States } from './States.js';
 import { Keyboard } from './Keyboard.js';
 
 import { Icons } from './Icons.js';
+import { registerServiceWorker } from './ServiceWorker.js';
 
 const STATE = {
   Menu: 0,
@@ -416,3 +417,5 @@ class Game {
 }
 
 window.game = new Game();
+
+registerServiceWorker();

@@ -1,24 +1,20 @@
 {
-  "name": "bsehovac.github.io",
+  "name": "the-cube",
   "version": "1.0.0",
-  "description": "",
-  "main": "",
-  "dependencies": {},
-  "devDependencies": {
-    "rollup-plugin-babel-minify": "^5.0.0"
-  },
+  "private": true,
+  "description": "A Rubik's Cube game for the browser.",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup -c rollup.config.build.js && cp upup.min.js export/ && cp upup.sw.min.js export/ && cp index.html export/ && cp -R assets export/"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/bsehovac/bsehovac.github.io.git"
-  },
-  "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/bsehovac/bsehovac.github.io/issues"
+  "dependencies": {
+    "three": "^0.186.0"
   },
-  "homepage": "https://github.com/bsehovac/bsehovac.github.io#readme"
+  "devDependencies": {
+    "sass": "^1.104.1",
+    "vite": "^8.3.0"
+  }
 }

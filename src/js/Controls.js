@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 import { Tween, Easing } from './Tween.js';
 import { Draggable } from './Draggable.js';
 
@@ -26,7 +28,7 @@ class Controls {
     this.game.cube.object.add( this.group );
 
     this.helper = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry( 200, 200 ),
+      new THREE.PlaneGeometry( 200, 200 ),
       helperMaterial.clone()
     );
 
@@ -34,7 +36,7 @@ class Controls {
     this.game.world.scene.add( this.helper );
 
     this.edges = new THREE.Mesh(
-      new THREE.BoxBufferGeometry( 1, 1, 1 ),
+      new THREE.BoxGeometry( 1, 1, 1 ),
       helperMaterial.clone(),
     );
 
@@ -261,8 +263,8 @@ class Controls {
 
         const layer = this.flipLayer.slice( 0 );
 
-        this.game.cube.object.rotation.setFromVector3( this.snapRotation( this.game.cube.object.rotation.toVector3() ) );
-        this.group.rotation.setFromVector3( this.snapRotation( this.group.rotation.toVector3() ) );
+        this.game.cube.object.rotation.setFromVector3( this.snapRotation( new THREE.Vector3().setFromEuler( this.game.cube.object.rotation ) ) );
+        this.group.rotation.setFromVector3( this.snapRotation( new THREE.Vector3().setFromEuler( this.group.rotation ) ) );
         this.deselectLayer( this.flipLayer );
 
         callback( layer );
@@ -312,7 +314,7 @@ class Controls {
       },
       onComplete: () => {
 
-        this.edges.rotation.setFromVector3( this.snapRotation( this.edges.rotation.toVector3() ) );
+        this.edges.rotation.setFromVector3( this.snapRotation( new THREE.Vector3().setFromEuler( this.edges.rotation ) ) );
         this.game.cube.object.rotation.copy( this.edges.rotation );
         callback();
 
@@ -345,9 +347,9 @@ class Controls {
 
       const piece = this.game.cube.pieces[ index ];
 
-      piece.applyMatrix( from.matrixWorld );
+      piece.applyMatrix4( from.matrixWorld );
       from.remove( piece );
-      piece.applyMatrix( new THREE.Matrix4().getInverse( to.matrixWorld ) );
+      piece.applyMatrix4( new THREE.Matrix4().copy( to.matrixWorld ).invert() );
       to.add( piece );
 
     } );
@@ -485,7 +487,7 @@ class Controls {
 
   detach( child, parent ) {
 
-    child.applyMatrix( parent.matrixWorld );
+    child.applyMatrix4( parent.matrixWorld );
     parent.remove( child );
     this.game.world.scene.add( child );
 
@@ -493,7 +495,7 @@ class Controls {
 
   attach( child, parent ) {
 
-    child.applyMatrix( new THREE.Matrix4().getInverse( parent.matrixWorld ) );
+    child.applyMatrix4( new THREE.Matrix4().copy( parent.matrixWorld ).invert() );
     this.game.world.scene.remove( child );
     parent.add( child );
 
