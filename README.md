@@ -1,9 +1,11 @@
 # The Cube
 
+[![CI](https://github.com/circleous/the-cube/actions/workflows/ci.yml/badge.svg)](https://github.com/circleous/the-cube/actions/workflows/ci.yml)
+
 A Rubik's Cube game for the browser. Built from the original
 [Boris Sehovac](https://github.com/bsehovac/the-cube) source.
 
-[![CI](https://github.com/circleous/the-cube/actions/workflows/ci.yml/badge.svg)](https://github.com/circleous/the-cube/actions/workflows/ci.yml)
+Play it at **https://circleous.github.io/the-cube/**.
 
 ## Requirements
 
