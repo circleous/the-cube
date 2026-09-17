@@ -15,6 +15,15 @@
     align-items: center
     margin: 0 0.7em
 
+  .keys__key
+    display: block
+    padding: 0
+    border: 0
+    background: none
+    color: inherit
+    cursor: pointer
+    pointer-events: auto
+
   kbd
     display: block
     min-width: 1.9em
@@ -24,6 +33,20 @@
     border-radius: 0.4em
     line-height: 1
     text-align: center
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease
+
+  .keys__key:hover kbd,
+  .keys__key:focus-visible kbd
+    border-color: rgba(#070d15, 0.6)
+    color: rgba(#070d15, 0.85)
+
+  .keys__key:active kbd
+    background-color: rgba(#070d15, 0.12)
+
+  .keys__key[aria-pressed='true'] kbd
+    background-color: rgba(#070d15, 0.8)
+    border-color: rgba(#070d15, 0.8)
+    color: #fff
 
   i
     font-style: normal

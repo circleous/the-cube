@@ -1,5 +1,6 @@
-// Thin adapter: key codes to move notation. The model owns turning notation into a
-// local move, so the orientation math that used to live here is gone.
+// Input adapter: physical key codes and the on-screen keycaps both map to the same
+// turns and rotations. The model owns turning notation into a local move, so the
+// orientation math that used to live here is gone.
 
 const SHIFT = 16;
 
@@ -18,6 +19,9 @@ const ROTATIONS = {
   90: 'z',
 };
 
+const FACE_KEYS = Object.values(FACES);
+const ROTATION_KEYS = Object.values(ROTATIONS);
+
 class Keyboard {
   constructor(game) {
     this.game = game;
@@ -28,23 +32,67 @@ class Keyboard {
 
     window.addEventListener('keydown', this.keydown, false);
     window.addEventListener('keyup', this.keyup, false);
+
+    this.initKeys();
+  }
+
+  // The on-screen keycaps share this map, so both inputs behave identically.
+  initKeys() {
+    this.keys = [...document.querySelectorAll('.keys__key')];
+    this.shiftKey = this.keys.find((key) => key.dataset.key === 'shift');
+
+    this.keys.forEach((key) => {
+      key.addEventListener('click', () => this.press(key.dataset.key));
+    });
+
+    this.renderShift();
+  }
+
+  press(key) {
+    if (key === 'shift') {
+      this.shift = !this.shift;
+      this.renderShift();
+    } else if (FACE_KEYS.includes(key)) {
+      this.turn(key);
+    } else if (ROTATION_KEYS.includes(key)) {
+      this.rotate(key);
+    }
+  }
+
+  turn(face) {
+    const modifier = this.shift ? `'` : ``;
+
+    this.game.controls.notate(face + modifier);
+  }
+
+  rotate(axis) {
+    this.game.controls.rotate(axis, this.shift ? 1 : -1);
+  }
+
+  // The on-screen Shift is a toggle rather than a hold, so it must show its state.
+  renderShift() {
+    if (this.shiftKey) this.shiftKey.setAttribute('aria-pressed', String(this.shift));
   }
 
   keydown(e) {
-    if (e.keyCode === SHIFT) this.shift = true;
+    if (e.keyCode === SHIFT) {
+      this.shift = true;
+      this.renderShift();
+    }
     if (e.repeat) return;
 
     if (FACES[e.keyCode]) {
-      const modifier = this.shift ? `'` : ``;
-
-      this.game.controls.notate(FACES[e.keyCode] + modifier);
+      this.turn(FACES[e.keyCode]);
     } else if (ROTATIONS[e.keyCode]) {
-      this.game.controls.rotate(ROTATIONS[e.keyCode], this.shift ? 1 : -1);
+      this.rotate(ROTATIONS[e.keyCode]);
     }
   }
 
   keyup(e) {
-    if (e.keyCode === SHIFT) this.shift = false;
+    if (e.keyCode === SHIFT) {
+      this.shift = false;
+      this.renderShift();
+    }
   }
 }
 
