@@ -127,6 +127,21 @@ describe('Persistence', () => {
     expect(restored.themes.theme).toBe('rain');
   });
 
+  it('rebuilds the model pieces when loading a non-default cube size', () => {
+    const game = makeGame(new Cube(3));
+    const persistence = new Persistence(game);
+
+    localStorage.setItem(
+      KEYS.preferences,
+      JSON.stringify({ cubeSize: 5, flipConfig: 0, dificulty: 1, fov: 10, theme: 'cube' }),
+    );
+
+    persistence.loadPreferences();
+
+    expect(game.cube.size).toBe(5);
+    expect(game.cube.pieces).toHaveLength(125);
+  });
+
   it('round-trips scores', () => {
     const game = makeGame();
 

@@ -113,7 +113,11 @@ class Persistence {
   applyPreferences(preferences) {
     const { game } = this;
 
-    game.cube.size = parseInt(preferences.cubeSize);
+    // setSize, not a bare `size = ...`: the model must rebuild its pieces to match
+    // the new size before the view builds meshes from them. Assigning the field
+    // alone leaves the previous size's piece set, and the view then renders that
+    // stale set at the new size (a 5x5 loads as 27 scattered pieces).
+    game.cube.setSize(parseInt(preferences.cubeSize));
     game.cubeView.flipConfig = parseInt(preferences.flipConfig);
     game.scrambler.dificulty = parseInt(preferences.dificulty);
 
