@@ -152,12 +152,12 @@ class Persistence {
 
       if (!scores) throw new Error();
 
-      this.game.scores.data = scores;
+      this.game.scoreboard.data = scores;
     } catch {}
   }
 
   saveScores() {
-    localStorage.setItem(KEYS.scores, JSON.stringify(this.game.scores.data));
+    localStorage.setItem(KEYS.scores, JSON.stringify(this.game.scoreboard.data));
   }
 
   clearScores() {

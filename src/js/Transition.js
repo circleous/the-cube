@@ -196,8 +196,6 @@ class Transition {
   }
 
   stats(show) {
-    if (show) this.game.scores.calcStats();
-
     this.activeTransitions++;
 
     this.tweens.stats.forEach((tween) => {

@@ -7,7 +7,8 @@ import { Transition } from './Transition.js';
 import { Timer } from './Timer.js';
 import { Preferences } from './Preferences.js';
 import { Confetti } from './Confetti.js';
-import { Scores } from './Scores.js';
+import { Scoreboard } from './Scoreboard.js';
+import { renderStats } from './ScoreboardView.js';
 import { Persistence } from './Persistence.js';
 import { Themes } from './Themes.js';
 import { ThemeEditor } from './ThemeEditor.js';
@@ -55,7 +56,7 @@ class Game {
     this.transition = new Transition(this);
     this.timer = new Timer(this);
     this.preferences = new Preferences(this);
-    this.scores = new Scores(this);
+    this.scoreboard = new Scoreboard();
     this.persistence = new Persistence(this);
     this.confetti = new Confetti(this);
     this.themes = new Themes(this);
@@ -76,9 +77,16 @@ class Game {
     this.transition.init();
 
     this.persistence.loadGame();
-    this.scores.calcStats();
+    this.renderStats();
 
     setTimeout(() => this.flow.start(), 500);
+  }
+
+  renderStats() {
+    renderStats(this.dom.stats, {
+      size: this.cube.size,
+      stats: this.scoreboard.stats(this.cube.size),
+    });
   }
 
   // The effects the screen flow triggers. The flow knows the order and timing;
@@ -113,6 +121,8 @@ class Game {
 
       onPrefsExit: () => this.cubeView.resize(),
 
+      onStatsEnter: () => this.renderStats(),
+
       onThemeEnter: () => {
         this.themeEditor.colorPicker(true);
 
@@ -137,7 +147,7 @@ class Game {
         this.timer.stop();
         this.persistence.clearGame();
 
-        return this.scores.addScore(this.timer.deltaTime);
+        return this.scoreboard.add(this.cube.size, this.timer.deltaTime).improved;
       },
 
       onCelebrate: () => this.confetti.start(),

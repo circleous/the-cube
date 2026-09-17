@@ -47,6 +47,7 @@ function fakeHandlers() {
     onPlayReady: handler('onPlayReady'),
     onPlayExit: handler('onPlayExit'),
     onPrefsExit: handler('onPrefsExit'),
+    onStatsEnter: handler('onStatsEnter'),
     onThemeEnter: handler('onThemeEnter'),
     onThemeExit: handler('onThemeExit'),
     onThemeRestoreCube: handler('onThemeRestoreCube'),

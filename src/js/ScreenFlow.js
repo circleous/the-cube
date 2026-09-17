@@ -80,7 +80,10 @@ class ScreenFlow {
         this.transition.title(HIDE);
         this.transition.cube(HIDE);
 
-        setTimeout(() => this.transition.stats(SHOW), 1000);
+        setTimeout(() => {
+          this.handlers.onStatsEnter();
+          this.transition.stats(SHOW);
+        }, 1000);
       },
 
       'stats->menu': () => {
@@ -153,6 +156,7 @@ class ScreenFlow {
 
         setTimeout(() => {
           this.handlers.onCompleteCleanup();
+          this.handlers.onStatsEnter();
           this.transition.stats(SHOW);
           this.transition.elevate(0);
         }, 1000);

@@ -1,4 +1,5 @@
 import { Animation } from './Animation.js';
+import { formatTime } from './formatTime.js';
 
 class Timer extends Animation {
   constructor(game) {
@@ -48,10 +49,7 @@ class Timer extends Animation {
   }
 
   convert() {
-    const seconds = parseInt((this.deltaTime / 1000) % 60);
-    const minutes = parseInt(this.deltaTime / (1000 * 60));
-
-    this.converted = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    this.converted = formatTime(this.deltaTime);
   }
 
   setText() {

@@ -27,7 +27,7 @@ function makeGame(model = new Cube(3)) {
     cube: model,
     cubeView: { flipConfig: 0, syncAll: vi.fn() },
     timer: { deltaTime: 0 },
-    scores: { data: scores() },
+    scoreboard: { data: scores() },
     world: { fov: 10, resize: vi.fn() },
     themes,
     scrambler: { dificulty: 1 },
@@ -55,15 +55,15 @@ describe('Persistence', () => {
     localStorage.setItem(KEYS.playing, 'true');
     localStorage.setItem(KEYS.savedState, JSON.stringify({ size: 3, pieces: [] }));
     localStorage.setItem(KEYS.preferences, JSON.stringify({ cubeSize: 3 }));
-    game.scores.data[3].solves = 7;
-    localStorage.setItem(KEYS.scores, JSON.stringify(game.scores.data));
+    game.scoreboard.data[3].solves = 7;
+    localStorage.setItem(KEYS.scores, JSON.stringify(game.scoreboard.data));
 
     const persistence = new Persistence(game);
     persistence.init();
 
     expect(localStorage.getItem(KEYS.savedState)).toBeNull();
     expect(localStorage.getItem(KEYS.preferences)).not.toBeNull(); // re-saved with defaults
-    expect(game.scores.data[3].solves).toBe(7);
+    expect(game.scoreboard.data[3].solves).toBe(7);
     expect(localStorage.getItem(KEYS.version)).toBe(VERSION);
   });
 
@@ -130,14 +130,14 @@ describe('Persistence', () => {
   it('round-trips scores', () => {
     const game = makeGame();
 
-    game.scores.data[3].solves = 3;
-    game.scores.data[3].best = 111;
+    game.scoreboard.data[3].solves = 3;
+    game.scoreboard.data[3].best = 111;
 
     new Persistence(game).saveScores();
 
     const restored = makeGame();
     new Persistence(restored).loadScores();
 
-    expect(restored.scores.data[3]).toEqual({ scores: [], solves: 3, best: 111, worst: 0 });
+    expect(restored.scoreboard.data[3]).toEqual({ scores: [], solves: 3, best: 111, worst: 0 });
   });
 });
