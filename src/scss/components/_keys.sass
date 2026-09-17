@@ -1,0 +1,35 @@
+.ui__keys
+  position: absolute
+  left: 0
+  right: 0
+  bottom: 1.4em
+  z-index: 5
+  display: flex
+  flex-wrap: wrap
+  justify-content: center
+  font-size: 0.45em
+  color: rgba(#070d15, 0.55)
+
+  .keys__group
+    display: flex
+    align-items: center
+    margin: 0 0.7em
+
+  kbd
+    display: block
+    min-width: 1.9em
+    margin: 0 0.15em
+    padding: 0.45em 0.4em
+    border: 0.1em solid rgba(#070d15, 0.3)
+    border-radius: 0.4em
+    line-height: 1
+    text-align: center
+
+  i
+    font-style: normal
+    margin-left: 0.5em
+    opacity: 0.7
+
+@media (hover: none) and (pointer: coarse)
+  .ui__keys
+    display: none
