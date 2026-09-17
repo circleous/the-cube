@@ -3,17 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "description": "A Rubik's Cube game for the browser.",
+  "license": "ISC",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check": "oxlint && oxfmt --check"
   },
-  "license": "ISC",
   "dependencies": {
     "three": "^0.186.0"
   },
   "devDependencies": {
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
     "sass": "^1.104.1",
     "vite": "^8.3.0"
   }

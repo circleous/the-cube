@@ -8,40 +8,46 @@
 //     filenames are immutable
 const CACHE = 'the-cube-v1';
 
-self.addEventListener( 'install', () => {
+self.addEventListener('install', () => {
   self.skipWaiting();
-} );
+});
 
-self.addEventListener( 'activate', ( event ) => {
-  event.waitUntil( self.clients.claim() );
-} );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
-self.addEventListener( 'fetch', ( event ) => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  if ( request.method !== 'GET' ) return;
-  if ( new URL( request.url ).origin !== self.location.origin ) return;
+  if (request.method !== 'GET') return;
+  if (new URL(request.url).origin !== self.location.origin) return;
 
-  if ( request.mode === 'navigate' ) {
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch( request )
-        .then( ( response ) => {
+      fetch(request)
+        .then((response) => {
           const copy = response.clone();
-          caches.open( CACHE ).then( ( cache ) => cache.put( request, copy ) );
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
           return response;
-        } )
-        .catch( () => caches.match( request ).then( ( cached ) => cached || caches.match( './index.html' ) ) )
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match('./index.html')),
+        ),
     );
     return;
   }
 
   event.respondWith(
-    caches.match( request ).then( ( cached ) => cached || fetch( request ).then( ( response ) => {
-      if ( response && response.status === 200 ) {
-        const copy = response.clone();
-        caches.open( CACHE ).then( ( cache ) => cache.put( request, copy ) );
-      }
-      return response;
-    } ) )
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        }),
+    ),
   );
-} );
+});
