@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { AXIS_INDEX } from './Moves.js';
 import { AXIS_VECTORS, QUARTER } from './CubeView.js';
 import { Draggable } from './Draggable.js';
+import { History } from './History.js';
 
 // Turns pointer and keyboard input into moves for the model, and asks the view to
 // animate them. All the transform bookkeeping that used to live here now sits behind
@@ -39,6 +40,7 @@ class Controls {
     this.onMove = () => {};
 
     this.momentum = [];
+    this.history = new History();
 
     this.scramble = null;
     this.state = STILL;
@@ -187,6 +189,7 @@ class Controls {
         const move = { axis, layer: this.dragLayer, turns };
 
         this.view.settleLayer(move, delta, false, () => {
+          this.history.record(move);
           this.onMove();
           this.game.persistence.saveGame();
 
@@ -215,8 +218,9 @@ class Controls {
     return { axis, coordinate, layer: this.model.layer(axis, coordinate) };
   }
 
-  // Animate a queue of moves, committing each to the model as it settles.
-  animateMoves(moves, scramble, done) {
+  // Animate a queue of moves, committing each to the model as it settles. Player
+  // turns are recorded so they can be undone; scrambles and undos are not.
+  animateMoves(moves, scramble, done, record = !scramble) {
     if (moves.length === 0) {
       done();
       return;
@@ -226,7 +230,11 @@ class Controls {
 
     this.state = ROTATING;
 
-    this.view.turn(move, scramble, () => this.animateMoves(moves, scramble, done));
+    this.view.turn(move, scramble, () => {
+      if (record) this.history.record(move);
+
+      this.animateMoves(moves, scramble, done, record);
+    });
   }
 
   // Keyboard / programmatic layer turn from notation.
@@ -240,6 +248,26 @@ class Controls {
       this.game.persistence.saveGame();
       this.checkIsSolved();
     });
+  }
+
+  // Replay the inverse of the most recent turn, animated like any other move.
+  undo() {
+    if (this.state !== STILL) return;
+    if (this.enabled !== true) return;
+
+    const move = this.history.popInverse();
+
+    if (!move) return;
+
+    this.animateMoves(
+      [move],
+      false,
+      () => {
+        this.state = STILL;
+        this.game.persistence.saveGame();
+      },
+      false,
+    );
   }
 
   // Rotate the whole cube (view orientation only, no piece changes).

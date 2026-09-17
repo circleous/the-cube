@@ -14,7 +14,7 @@ const SCREENS = {
 
 const BUTTONS = {
   menu: ['stats', 'prefs'],
-  playing: ['back'],
+  playing: ['back', 'undo'],
   complete: [],
   stats: [],
   prefs: ['back', 'theme'],

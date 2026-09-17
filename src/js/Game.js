@@ -16,6 +16,10 @@ import { States } from './States.js';
 import { Keyboard } from './Keyboard.js';
 import { ScreenFlow } from './ScreenFlow.js';
 
+// Side-effect import: converts every `<icon>` tag into its SVG on load. It has no
+// binding by design, so removing it as an "unused" import silently blanks all of
+// the UI buttons.
+import './Icons.js';
 import { registerServiceWorker } from './ServiceWorker.js';
 
 // Composition root: it builds the modules, connects input to the screen flow, and
@@ -44,6 +48,7 @@ class Game {
         stats: document.querySelector('.btn--stats'),
         reset: document.querySelector('.btn--reset'),
         theme: document.querySelector('.btn--theme'),
+        undo: document.querySelector('.btn--undo'),
       },
     };
 
@@ -98,6 +103,7 @@ class Game {
         if (!this.saved) {
           this.scrambler.generate({ size: this.cube.size });
           this.controls.scrambleCube();
+          this.controls.history.clear();
           this.newGame = true;
         }
 
@@ -122,7 +128,13 @@ class Game {
         if (!this.newGame) this.timer.stop();
       },
 
-      onPrefsExit: () => this.cubeView.resize(),
+      onPrefsExit: () => {
+        const size = this.cube.size;
+
+        this.cubeView.resize();
+
+        if (this.cube.size !== size) this.controls.history.clear();
+      },
 
       onStatsEnter: () => this.renderStats(),
 
@@ -131,6 +143,7 @@ class Game {
 
         this.cube.restore(States['3']['checkerboard']);
         this.cubeView.syncAll();
+        this.controls.history.clear();
 
         this.themeEditor.setHSL(null, false);
       },
@@ -166,6 +179,7 @@ class Game {
         this.cubeView.reset();
         this.cubeView.syncAll();
         this.confetti.stop();
+        this.controls.history.clear();
       },
     };
   }
@@ -204,6 +218,8 @@ class Game {
     };
 
     this.dom.buttons.back.onclick = () => this.flow.back();
+
+    this.dom.buttons.undo.onclick = () => this.controls.undo();
 
     this.dom.buttons.reset.onclick = () => {
       if (this.flow.screen === 'theme') this.flow.resetTheme();

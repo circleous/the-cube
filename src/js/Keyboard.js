@@ -19,6 +19,8 @@ const ROTATIONS = {
   90: 'z',
 };
 
+const Z = 90;
+
 const FACE_KEYS = Object.values(FACES);
 const ROTATION_KEYS = Object.values(ROTATIONS);
 
@@ -96,7 +98,10 @@ class Keyboard {
     }
     if (e.repeat) return;
 
-    if (FACES[e.keyCode]) {
+    if ((e.metaKey || e.ctrlKey) && e.keyCode === Z) {
+      e.preventDefault();
+      this.game.controls.undo();
+    } else if (FACES[e.keyCode]) {
       this.turn(FACES[e.keyCode]);
     } else if (ROTATIONS[e.keyCode]) {
       this.rotate(ROTATIONS[e.keyCode]);
