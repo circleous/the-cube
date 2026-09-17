@@ -26,6 +26,7 @@ class Keyboard {
   constructor(game) {
     this.game = game;
     this.shift = false;
+    this.enabled = false;
 
     this.keydown = this.keydown.bind(this);
     this.keyup = this.keyup.bind(this);
@@ -34,6 +35,16 @@ class Keyboard {
     window.addEventListener('keyup', this.keyup, false);
 
     this.initKeys();
+  }
+
+  // Input is only live once the game is actually playing; the menu, stats and
+  // theme screens accept none of it. Mirrors `Controls.enable`/`disable`.
+  enable() {
+    this.enabled = true;
+  }
+
+  disable() {
+    this.enabled = false;
   }
 
   // The on-screen keycaps share this map, so both inputs behave identically.
@@ -49,6 +60,8 @@ class Keyboard {
   }
 
   press(key) {
+    if (this.enabled !== true) return;
+
     if (key === 'shift') {
       this.shift = !this.shift;
       this.renderShift();
@@ -75,6 +88,8 @@ class Keyboard {
   }
 
   keydown(e) {
+    if (this.enabled !== true) return;
+
     if (e.keyCode === SHIFT) {
       this.shift = true;
       this.renderShift();

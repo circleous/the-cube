@@ -112,11 +112,13 @@ class Game {
 
       onPlayReady: () => {
         this.controls.enable();
+        this.keyboard.enable();
         if (!this.newGame) this.timer.start(true);
       },
 
       onPlayExit: () => {
         this.controls.disable();
+        this.keyboard.disable();
         if (!this.newGame) this.timer.stop();
       },
 
@@ -145,6 +147,7 @@ class Game {
         this.saved = false;
 
         this.controls.disable();
+        this.keyboard.disable();
         this.timer.stop();
         this.persistence.clearGame();
 

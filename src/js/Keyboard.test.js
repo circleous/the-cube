@@ -13,6 +13,15 @@ function makeGame() {
   return { controls: { notate: vi.fn(), rotate: vi.fn() } };
 }
 
+function setup() {
+  const game = makeGame();
+  const keyboard = new Keyboard(game);
+
+  keyboard.enable();
+
+  return { game, keyboard };
+}
+
 function pressPhysical(keyCode) {
   const event = new KeyboardEvent('keydown');
 
@@ -24,8 +33,7 @@ beforeEach(() => vi.restoreAllMocks());
 
 describe('Keyboard', () => {
   it('turns a face from an on-screen keycap', () => {
-    const game = makeGame();
-    new Keyboard(game);
+    const { game } = setup();
 
     document.querySelector('[data-key="R"]').click();
 
@@ -33,8 +41,7 @@ describe('Keyboard', () => {
   });
 
   it('reverses a face while the on-screen Shift toggle is on', () => {
-    const game = makeGame();
-    new Keyboard(game);
+    const { game } = setup();
 
     document.querySelector('[data-key="shift"]').click();
     document.querySelector('[data-key="R"]').click();
@@ -43,8 +50,7 @@ describe('Keyboard', () => {
   });
 
   it('reflects the on-screen Shift state through aria-pressed', () => {
-    const game = makeGame();
-    new Keyboard(game);
+    setup();
 
     const shift = document.querySelector('[data-key="shift"]');
 
@@ -56,8 +62,7 @@ describe('Keyboard', () => {
   });
 
   it('rotates from an on-screen keycap, inverted while Shift is on', () => {
-    const game = makeGame();
-    new Keyboard(game);
+    const { game } = setup();
 
     document.querySelector('[data-key="x"]').click();
     expect(game.controls.rotate).toHaveBeenCalledWith('x', -1);
@@ -68,8 +73,7 @@ describe('Keyboard', () => {
   });
 
   it('keeps the physical keyboard mapping', () => {
-    const game = makeGame();
-    new Keyboard(game);
+    const { game } = setup();
 
     pressPhysical(82);
     expect(game.controls.notate).toHaveBeenCalledWith('R');
@@ -77,5 +81,19 @@ describe('Keyboard', () => {
     pressPhysical(16);
     pressPhysical(82);
     expect(game.controls.notate).toHaveBeenLastCalledWith("R'");
+  });
+
+  it('ignores keycaps and keys until the game is playing', () => {
+    const game = makeGame();
+    const keyboard = new Keyboard(game);
+
+    expect(keyboard.enabled).toBe(false);
+
+    document.querySelector('[data-key="R"]').click();
+    document.querySelector('[data-key="shift"]').click();
+    pressPhysical(82);
+
+    expect(game.controls.notate).not.toHaveBeenCalled();
+    expect(document.querySelector('[data-key="shift"]').getAttribute('aria-pressed')).toBe('false');
   });
 });
