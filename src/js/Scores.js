@@ -47,7 +47,7 @@ class Scores {
 
     if (time > data.worst) data.worst = time;
 
-    this.game.storage.saveScores();
+    this.game.persistence.saveScores();
 
     return bestTime;
   }

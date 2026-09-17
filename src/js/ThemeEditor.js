@@ -71,7 +71,7 @@ class ThemeEditor {
         },
         onComplete: () => {
           this.updateHSL();
-          this.game.storage.savePreferences();
+          this.game.persistence.savePreferences();
         },
       });
     } else {
@@ -80,7 +80,7 @@ class ThemeEditor {
       lightness.setValue(l * 100);
 
       this.updateHSL();
-      this.game.storage.savePreferences();
+      this.game.persistence.savePreferences();
     }
   }
 

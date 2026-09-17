@@ -20,7 +20,7 @@ function fakeGame(size = 3) {
     world: { scene: new THREE.Scene() },
     themes: { getColors: () => PALETTE },
     preferences: { ranges: { size: { value: size } } },
-    storage: { clearGame() {} },
+    persistence: { clearGame() {} },
     timer: { reset() {} },
     saved: false,
   };

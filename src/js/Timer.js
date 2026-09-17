@@ -5,6 +5,7 @@ class Timer extends Animation {
     super(false);
 
     this.game = game;
+    this.onTick = () => {};
     this.reset();
   }
 
@@ -41,7 +42,7 @@ class Timer extends Animation {
     this.convert();
 
     if (this.converted != old) {
-      localStorage.setItem('theCube_time', this.deltaTime);
+      this.onTick(this.deltaTime);
       this.setText();
     }
   }

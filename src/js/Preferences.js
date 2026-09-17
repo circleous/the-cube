@@ -18,7 +18,7 @@ class Preferences {
             item.innerHTML = this.game.scrambler.scrambleLength[this.game.cube.size][i];
           });
         },
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       flip: new Range('flip', {
@@ -28,7 +28,7 @@ class Preferences {
         onUpdate: (value) => {
           this.game.cubeView.flipConfig = value;
         },
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       scramble: new Range('scramble', {
@@ -38,7 +38,7 @@ class Preferences {
         onUpdate: (value) => {
           this.game.scrambler.dificulty = value;
         },
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       fov: new Range('fov', {
@@ -48,7 +48,7 @@ class Preferences {
           this.game.world.fov = value;
           this.game.world.resize();
         },
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       theme: new Range('theme', {
@@ -59,28 +59,28 @@ class Preferences {
           const theme = ['cube', 'erno', 'dust', 'camo', 'rain'][value];
           this.game.themes.setTheme(theme);
         },
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       hue: new Range('hue', {
         value: 0,
         range: [0, 360],
         onUpdate: () => this.game.themeEditor.updateHSL(),
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       saturation: new Range('saturation', {
         value: 100,
         range: [0, 100],
         onUpdate: () => this.game.themeEditor.updateHSL(),
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
 
       lightness: new Range('lightness', {
         value: 50,
         range: [0, 100],
         onUpdate: () => this.game.themeEditor.updateHSL(),
-        onComplete: () => this.game.storage.savePreferences(),
+        onComplete: () => this.game.persistence.savePreferences(),
       }),
     };
 

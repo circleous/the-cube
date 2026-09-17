@@ -188,7 +188,7 @@ class Controls {
 
         this.view.settleLayer(move, delta, false, () => {
           this.onMove();
-          this.game.storage.saveGame();
+          this.game.persistence.saveGame();
 
           this.state = this.gettingDrag ? PREPARING : STILL;
           this.gettingDrag = false;
@@ -237,7 +237,7 @@ class Controls {
     this.animateMoves(this.model.localMoves(name), false, () => {
       this.state = STILL;
       this.onMove();
-      this.game.storage.saveGame();
+      this.game.persistence.saveGame();
       this.checkIsSolved();
     });
   }
@@ -259,14 +259,14 @@ class Controls {
 
     if (this.scramble.length === 0) {
       this.scramble = null;
-      this.game.storage.saveGame();
+      this.game.persistence.saveGame();
       return;
     }
 
     this.animateMoves(this.scramble, true, () => {
       this.state = STILL;
       this.scramble = null;
-      this.game.storage.saveGame();
+      this.game.persistence.saveGame();
     });
   }
 

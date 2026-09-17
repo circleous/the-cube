@@ -8,7 +8,7 @@ import { Timer } from './Timer.js';
 import { Preferences } from './Preferences.js';
 import { Confetti } from './Confetti.js';
 import { Scores } from './Scores.js';
-import { Storage } from './Storage.js';
+import { Persistence } from './Persistence.js';
 import { Themes } from './Themes.js';
 import { ThemeEditor } from './ThemeEditor.js';
 import { States } from './States.js';
@@ -56,10 +56,12 @@ class Game {
     this.timer = new Timer(this);
     this.preferences = new Preferences(this);
     this.scores = new Scores(this);
-    this.storage = new Storage(this);
+    this.persistence = new Persistence(this);
     this.confetti = new Confetti(this);
     this.themes = new Themes(this);
     this.themeEditor = new ThemeEditor(this);
+
+    this.timer.onTick = (millis) => this.persistence.saveTime(millis);
 
     this.flow = new ScreenFlow(this.transition, this.createHandlers());
 
@@ -68,12 +70,12 @@ class Game {
 
     this.initActions();
 
-    this.storage.init();
+    this.persistence.init();
     this.preferences.init();
     this.cubeView.build();
     this.transition.init();
 
-    this.storage.loadGame();
+    this.persistence.loadGame();
     this.scores.calcStats();
 
     setTimeout(() => this.flow.start(), 500);
@@ -123,15 +125,7 @@ class Game {
       onThemeExit: () => this.themeEditor.colorPicker(false),
 
       onThemeRestoreCube: () => {
-        const gameCubeData = JSON.parse(localStorage.getItem('theCube_savedState'));
-
-        if (!gameCubeData) {
-          this.cubeView.resize(true);
-          return;
-        }
-
-        this.cube.restore(gameCubeData);
-        this.cubeView.syncAll();
+        if (!this.persistence.loadGame()) this.cubeView.resize(true);
       },
 
       onThemeReset: () => this.themeEditor.resetTheme(),
@@ -141,7 +135,7 @@ class Game {
 
         this.controls.disable();
         this.timer.stop();
-        this.storage.clearGame();
+        this.persistence.clearGame();
 
         return this.scores.addScore(this.timer.deltaTime);
       },
