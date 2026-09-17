@@ -3,12 +3,12 @@
 // scores table) and never touch a key; the encoding lives here as private helpers.
 
 const KEYS = {
-  version: 'theCube_version',
-  playing: 'theCube_playing',
-  savedState: 'theCube_savedState',
-  time: 'theCube_time',
-  preferences: 'theCube_preferences',
-  scores: 'theCube_scores',
+  version: 'theCube.version',
+  playing: 'theCube.playing',
+  savedState: 'theCube.snapshot',
+  time: 'theCube.time',
+  preferences: 'theCube.preferences',
+  scores: 'theCube.scoreboard',
 };
 
 class Persistence {
